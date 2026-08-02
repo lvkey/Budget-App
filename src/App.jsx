@@ -7,6 +7,7 @@ import { IncomeEditor } from './components/IncomeEditor';
 import { ExpenseTable } from './components/ExpenseTable';
 import { IncomeChartsPage } from './components/IncomeChartsPage';
 import { EXAMPLE_EXPENSE_TEMPLATE, DAYS_IN_PERIOD, VIEW_FREQUENCIES, OVERVIEW_KEY, convertCost } from './lib/data';
+import { calculateAfterTaxIncome } from './lib/tax';
 import { useSupabaseAuth } from './lib/useSupabaseAuth';
 import { useScenariosState } from './lib/useScenariosState';
 import { useSelectedScenarioId } from './lib/useSelectedScenarioId';
@@ -62,6 +63,12 @@ export default function App() {
 
   const currentScenario = scenarios.find((s) => s.id === selectedScenarioId) || scenarios[0];
   const incomeAmount = Number(currentScenario?.income) || 0;
+  const medicareLevy = currentScenario?.medicareLevy ?? true;
+  const hecsHelp = currentScenario?.hecsHelp ?? false;
+  // Every downstream figure (savings, charts, summary cards) works off the
+  // after-tax income - the gross amount is only used for editing.
+  const taxBreakdown = calculateAfterTaxIncome(incomeAmount, { medicareLevy, hecsHelp });
+  const netIncomeAmount = taxBreakdown.netIncome;
 
   const updateCurrentScenario = (updater) => {
     setScenarios((prev) => prev.map((s) => (s.id === selectedScenarioId ? updater(s) : s)));
@@ -119,6 +126,16 @@ export default function App() {
     updateScenario(selectedScenarioId, { income: value }).catch(console.error);
   };
 
+  const handleToggleMedicareLevy = (value) => {
+    updateCurrentScenario((s) => ({ ...s, medicareLevy: value }));
+    updateScenario(selectedScenarioId, { medicare_levy: value }).catch(console.error);
+  };
+
+  const handleToggleHecsHelp = (value) => {
+    updateCurrentScenario((s) => ({ ...s, hecsHelp: value }));
+    updateScenario(selectedScenarioId, { hecs_help: value }).catch(console.error);
+  };
+
   const handleClearCosts = () => {
     if (window.confirm('Clear all cost amounts back to $0.00 for this scenario? Expense names and frequencies are kept. This cannot be undone.')) {
       updateCurrentScenario((s) => ({ ...s, expenses: s.expenses.map((e) => ({ ...e, cost: 0 })) }));
@@ -135,7 +152,14 @@ export default function App() {
     const existingNames = scenarios.map((s) => s.name);
     const name = uniqueScenarioName('New Scenario', existingNames);
     const id = crypto.randomUUID();
-    const newScenario = { id, name, income: 0, expenses: EXAMPLE_EXPENSE_TEMPLATE.map((e) => ({ ...e, id: crypto.randomUUID() })) };
+    const newScenario = {
+      id,
+      name,
+      income: 0,
+      medicareLevy: true,
+      hecsHelp: false,
+      expenses: EXAMPLE_EXPENSE_TEMPLATE.map((e) => ({ ...e, id: crypto.randomUUID() })),
+    };
     setScenarios((prev) => [...prev, newScenario]);
     setSelectedScenarioId(id);
     insertScenarioWithExpenses(newScenario, userId, scenarios.length)
@@ -191,11 +215,12 @@ export default function App() {
   const totalDisplayed = processedData.reduce((sum, item) => sum + item.displayCost, 0);
   const totalAnnualExpenses = processedData.reduce((sum, item) => sum + item.dailyCost * DAYS_IN_PERIOD.Year, 0);
   // Savings is derived, not tracked independently, so it always reconciles with
-  // income and expenses instead of drifting out of sync with them.
-  const annualSavings = incomeAmount - totalAnnualExpenses;
+  // income and expenses instead of drifting out of sync with them. Uses net
+  // (after-tax) income, since that's what's actually available to spend.
+  const annualSavings = netIncomeAmount - totalAnnualExpenses;
   // Income and savings both convert to whichever time frame is selected, so the
   // cards and charts always describe the same period as the expense table.
-  const periodIncome = convertCost(incomeAmount, 'Year', effectiveFreqKey);
+  const periodIncome = convertCost(netIncomeAmount, 'Year', effectiveFreqKey);
   const periodSavings = periodIncome - totalDisplayed;
 
   if (authError || scenariosError) {
@@ -239,7 +264,7 @@ export default function App() {
         />
         <SummaryCards
           isOverview={viewFrequencyKey === OVERVIEW_KEY}
-          income={incomeAmount}
+          income={netIncomeAmount}
           periodIncome={periodIncome}
           periodSavings={periodSavings}
           annualSavings={annualSavings}
@@ -248,7 +273,17 @@ export default function App() {
         <ViewFrequencyToggle value={viewFrequencyKey} onChange={setViewFrequencyKey} hideOverview={page === 'income'} />
         {page === 'dashboard' && (
           <>
-            {editing && <IncomeEditor income={incomeAmount} onChangeIncome={handleChangeIncome} />}
+            {editing && (
+              <IncomeEditor
+                income={incomeAmount}
+                onChangeIncome={handleChangeIncome}
+                medicareLevy={medicareLevy}
+                hecsHelp={hecsHelp}
+                onToggleMedicareLevy={handleToggleMedicareLevy}
+                onToggleHecsHelp={handleToggleHecsHelp}
+                taxBreakdown={taxBreakdown}
+              />
+            )}
             <ExpenseTable
               data={processedData}
               totalDisplayed={totalDisplayed}

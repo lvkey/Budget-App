@@ -38,7 +38,7 @@ export const EXAMPLE_EXPENSE_TEMPLATE = [
 ];
 
 function scenario(id, name, income, expenses) {
-  return { id, name, income, expenses };
+  return { id, name, income, expenses, medicareLevy: true, hecsHelp: false };
 }
 
 const HM_EXPENSES = [

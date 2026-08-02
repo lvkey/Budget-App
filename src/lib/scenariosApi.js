@@ -26,6 +26,8 @@ export async function fetchScenarios(userId) {
     id: s.id,
     name: s.name,
     income: Number(s.income),
+    medicareLevy: s.medicare_levy ?? true,
+    hecsHelp: s.hecs_help ?? false,
     expenses: expenseRows.filter((e) => e.scenario_id === s.id).map(expenseRowToLocal),
   }));
 }
@@ -66,9 +68,15 @@ export async function clearScenarioCosts(scenarioId) {
 }
 
 export async function insertScenarioWithExpenses(scenario, userId, position) {
-  const { error: scenarioError } = await supabase
-    .from('scenarios')
-    .insert({ id: scenario.id, user_id: userId, name: scenario.name, income: scenario.income, position });
+  const { error: scenarioError } = await supabase.from('scenarios').insert({
+    id: scenario.id,
+    user_id: userId,
+    name: scenario.name,
+    income: scenario.income,
+    medicare_levy: scenario.medicareLevy ?? true,
+    hecs_help: scenario.hecsHelp ?? false,
+    position,
+  });
   if (scenarioError) throw scenarioError;
 
   if (scenario.expenses.length === 0) return;
@@ -123,6 +131,8 @@ export async function seedNewUser(userId) {
       id: newScenarioId,
       name: s.name,
       income: Number(s.income) || 0,
+      medicareLevy: s.medicareLevy ?? true,
+      hecsHelp: s.hecsHelp ?? false,
       expenses: (s.expenses || []).map((e) => ({
         id: crypto.randomUUID(),
         name: e.name,
@@ -135,9 +145,15 @@ export async function seedNewUser(userId) {
 
   for (let i = 0; i < remappedScenarios.length; i += 1) {
     const scenario = remappedScenarios[i];
-    const { error: scenarioError } = await supabase
-      .from('scenarios')
-      .insert({ id: scenario.id, user_id: userId, name: scenario.name, income: scenario.income, position: i });
+    const { error: scenarioError } = await supabase.from('scenarios').insert({
+      id: scenario.id,
+      user_id: userId,
+      name: scenario.name,
+      income: scenario.income,
+      medicare_levy: scenario.medicareLevy,
+      hecs_help: scenario.hecsHelp,
+      position: i,
+    });
     if (scenarioError) throw scenarioError;
 
     if (scenario.expenses.length === 0) continue;

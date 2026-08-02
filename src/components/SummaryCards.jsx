@@ -36,7 +36,7 @@ export function SummaryCards({ isOverview, income, periodIncome, periodSavings, 
   if (!isOverview) {
     return (
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
-        <Card label={`${periodLabel} Income`} icon={Wallet} value={periodIncome} hero />
+        <Card label={`${periodLabel} Net Income`} icon={Wallet} value={periodIncome} hero />
         <Card label={`${periodLabel} Savings`} icon={PiggyBank} value={periodSavings} />
       </div>
     );
@@ -44,7 +44,7 @@ export function SummaryCards({ isOverview, income, periodIncome, periodSavings, 
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-      <Card label="Annual Income" icon={Wallet} value={income} hero />
+      <Card label="Net Annual Income" icon={Wallet} value={income} hero />
       {[1, 2, 3, 5].map((years, i) => (
         <Card key={years} label={`${years}-Year Horizon`} icon={HORIZON_ICONS[i]} value={annualSavings * years} />
       ))}
