@@ -6,11 +6,21 @@ import { SummaryCards } from './components/SummaryCards';
 import { IncomeEditor } from './components/IncomeEditor';
 import { ExpenseTable } from './components/ExpenseTable';
 import { IncomeChartsPage } from './components/IncomeChartsPage';
-import { DEFAULT_SCENARIOS, EXAMPLE_EXPENSE_TEMPLATE, DAYS_IN_PERIOD, VIEW_FREQUENCIES, OVERVIEW_KEY, convertCost } from './lib/data';
-import { useLocalStorageState } from './lib/useLocalStorageState';
+import { EXAMPLE_EXPENSE_TEMPLATE, DAYS_IN_PERIOD, VIEW_FREQUENCIES, OVERVIEW_KEY, convertCost } from './lib/data';
+import { useSupabaseAuth } from './lib/useSupabaseAuth';
+import { useScenariosState } from './lib/useScenariosState';
+import { useSelectedScenarioId } from './lib/useSelectedScenarioId';
+import {
+  insertExpense,
+  updateExpense,
+  deleteExpense,
+  clearScenarioCosts,
+  insertScenarioWithExpenses,
+  updateScenario,
+  deleteScenario,
+  setSelectedScenarioId as persistSelectedScenarioId,
+} from './lib/scenariosApi';
 import { useDarkMode } from './lib/useDarkMode';
-
-const makeId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 function uniqueScenarioName(base, existingNames) {
   if (!existingNames.includes(base)) return base;
@@ -32,11 +42,12 @@ export default function App() {
   const effectiveFreqKey = viewFrequencyKey === OVERVIEW_KEY ? 'Week' : viewFrequencyKey;
   const viewFrequency = VIEW_FREQUENCIES.find((f) => f.key === effectiveFreqKey);
 
-  const [scenarios, setScenarios] = useLocalStorageState('budget-scenarios', DEFAULT_SCENARIOS);
-  const [selectedScenarioId, setSelectedScenarioId] = useLocalStorageState('budget-selected-scenario', DEFAULT_SCENARIOS[0].id);
+  const { userId, authLoading, authError } = useSupabaseAuth();
+  const { scenarios, setScenarios, loading: scenariosLoading, error: scenariosError, retry } = useScenariosState(userId);
+  const { selectedScenarioId, setSelectedScenarioId, loading: selectedLoading } = useSelectedScenarioId(userId, scenarios);
 
   useEffect(() => {
-    if (!scenarios.some((s) => s.id === selectedScenarioId) && scenarios.length > 0) {
+    if (selectedScenarioId && !scenarios.some((s) => s.id === selectedScenarioId) && scenarios.length > 0) {
       setSelectedScenarioId(scenarios[0].id);
     }
   }, [scenarios, selectedScenarioId]);
@@ -67,6 +78,7 @@ export default function App() {
       ...s,
       expenses: s.expenses.map((e) => (e.id === expenseId ? { ...e, cost: rawValue } : e)),
     }));
+    updateExpense(expenseId, { cost: rawValue }).catch(console.error);
   };
 
   const handleChangeField = (expenseId, field, value) => {
@@ -74,43 +86,61 @@ export default function App() {
       ...s,
       expenses: s.expenses.map((e) => (e.id === expenseId ? { ...e, [field]: value } : e)),
     }));
+    updateExpense(expenseId, { [field]: value }).catch(console.error);
   };
 
   const handleAddExpense = () => {
+    const id = crypto.randomUUID();
     updateCurrentScenario((s) => ({
       ...s,
-      expenses: [...s.expenses, { id: makeId('expense'), name: '', freq: 'Month', cost: 0 }],
+      expenses: [...s.expenses, { id, name: '', freq: 'Month', cost: 0 }],
     }));
+    insertExpense({
+      id,
+      scenarioId: selectedScenarioId,
+      userId,
+      name: '',
+      freq: 'Month',
+      cost: 0,
+      position: currentScenario?.expenses.length || 0,
+    }).catch(console.error);
   };
 
   const handleRemoveExpense = (expenseId) => {
     const item = currentScenario?.expenses.find((e) => e.id === expenseId);
     if (window.confirm(`Remove "${item?.name || 'this expense'}"?`)) {
       updateCurrentScenario((s) => ({ ...s, expenses: s.expenses.filter((e) => e.id !== expenseId) }));
+      deleteExpense(expenseId).catch(console.error);
     }
   };
 
   const handleChangeIncome = (value) => {
     updateCurrentScenario((s) => ({ ...s, income: value }));
+    updateScenario(selectedScenarioId, { income: value }).catch(console.error);
   };
 
   const handleClearCosts = () => {
     if (window.confirm('Clear all cost amounts back to $0.00 for this scenario? Expense names and frequencies are kept. This cannot be undone.')) {
       updateCurrentScenario((s) => ({ ...s, expenses: s.expenses.map((e) => ({ ...e, cost: 0 })) }));
+      clearScenarioCosts(selectedScenarioId).catch(console.error);
     }
   };
 
-  const handleSelectScenario = (id) => setSelectedScenarioId(id);
+  const handleSelectScenario = (id) => {
+    setSelectedScenarioId(id);
+    persistSelectedScenarioId(userId, id).catch(console.error);
+  };
 
   const handleCreateScenario = () => {
     const existingNames = scenarios.map((s) => s.name);
     const name = uniqueScenarioName('New Scenario', existingNames);
-    const id = makeId('scenario');
-    setScenarios((prev) => [
-      ...prev,
-      { id, name, income: 0, expenses: EXAMPLE_EXPENSE_TEMPLATE.map((e) => ({ ...e, id: makeId('expense') })) },
-    ]);
+    const id = crypto.randomUUID();
+    const newScenario = { id, name, income: 0, expenses: EXAMPLE_EXPENSE_TEMPLATE.map((e) => ({ ...e, id: crypto.randomUUID() })) };
+    setScenarios((prev) => [...prev, newScenario]);
     setSelectedScenarioId(id);
+    insertScenarioWithExpenses(newScenario, userId, scenarios.length)
+      .then(() => persistSelectedScenarioId(userId, id))
+      .catch(console.error);
   };
 
   const handleCopyScenario = (sourceId) => {
@@ -118,16 +148,18 @@ export default function App() {
     if (!source) return;
     const existingNames = scenarios.map((s) => s.name);
     const name = uniqueScenarioName(`${source.name} copy`, existingNames);
-    const id = makeId('scenario');
-    setScenarios((prev) => [
-      ...prev,
-      { ...source, id, name, expenses: source.expenses.map((e) => ({ ...e, id: makeId('expense') })) },
-    ]);
+    const id = crypto.randomUUID();
+    const newScenario = { ...source, id, name, expenses: source.expenses.map((e) => ({ ...e, id: crypto.randomUUID() })) };
+    setScenarios((prev) => [...prev, newScenario]);
     setSelectedScenarioId(id);
+    insertScenarioWithExpenses(newScenario, userId, scenarios.length)
+      .then(() => persistSelectedScenarioId(userId, id))
+      .catch(console.error);
   };
 
   const handleRenameScenario = (id, name) => {
     setScenarios((prev) => prev.map((s) => (s.id === id ? { ...s, name } : s)));
+    updateScenario(id, { name }).catch(console.error);
   };
 
   const handleDeleteScenario = (id) => {
@@ -135,6 +167,7 @@ export default function App() {
     const target = scenarios.find((s) => s.id === id);
     if (window.confirm(`Delete scenario "${target?.name}"? This cannot be undone.`)) {
       setScenarios((prev) => prev.filter((s) => s.id !== id));
+      deleteScenario(id).catch(console.error);
     }
   };
 
@@ -164,6 +197,31 @@ export default function App() {
   // cards and charts always describe the same period as the expense table.
   const periodIncome = convertCost(incomeAmount, 'Year', effectiveFreqKey);
   const periodSavings = periodIncome - totalDisplayed;
+
+  if (authError || scenariosError) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-[#121212] text-slate-900 dark:text-white/90 flex items-center justify-center p-4">
+        <div className="text-center space-y-3">
+          <p className="text-sm text-slate-500 dark:text-white/60">Couldn't load your budget data.</p>
+          <button
+            type="button"
+            onClick={retry}
+            className="text-sm font-medium text-blue-500 dark:text-blue-400 hover:underline"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (authLoading || scenariosLoading || selectedLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-[#121212] text-slate-900 dark:text-white/90 flex items-center justify-center p-4">
+        <p className="text-sm text-slate-500 dark:text-white/60">Loading…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#121212] text-slate-900 dark:text-white/90 p-3 sm:p-4 md:p-8 font-sans transition-colors">
