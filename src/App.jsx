@@ -228,6 +228,7 @@ export default function App() {
       <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
         <PageHeader page={page} onSelectPage={setPage} isDark={isDark} onToggleDark={setIsDark} />
         <ScenarioSelector
+          page={page}
           scenarios={scenarios}
           selectedScenarioId={selectedScenarioId}
           onSelectScenario={handleSelectScenario}

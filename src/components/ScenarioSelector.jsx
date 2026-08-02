@@ -1,7 +1,19 @@
 import { useState } from 'react';
 import { Copy, Pencil, Trash2, Plus, Check, X } from 'lucide-react';
 
+const PAGE_COPY = {
+  dashboard: {
+    title: 'Financial Trajectory',
+    subtitle: 'Enter your income and expenses to project your savings',
+  },
+  income: {
+    title: 'Income vs Expenses',
+    subtitle: 'See how your income splits across savings and each expense category',
+  },
+};
+
 export function ScenarioSelector({
+  page,
   scenarios,
   selectedScenarioId,
   onSelectScenario,
@@ -10,6 +22,7 @@ export function ScenarioSelector({
   onRenameScenario,
   onDeleteScenario,
 }) {
+  const { title, subtitle } = PAGE_COPY[page] || PAGE_COPY.dashboard;
   const [renaming, setRenaming] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [error, setError] = useState('');
@@ -45,8 +58,8 @@ export function ScenarioSelector({
     <div className="bg-white dark:bg-[#1e1e1e] p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-white/10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-800 dark:text-white/90">Financial Trajectory</h1>
-          <p className="text-slate-500 dark:text-white/60 mt-1">Enter your income and expenses to project your savings</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-800 dark:text-white/90">{title}</h1>
+          <p className="text-slate-500 dark:text-white/60 mt-1">{subtitle}</p>
         </div>
         <div className="flex flex-col gap-1 w-full md:w-auto">
           <label className="block text-xs font-semibold text-slate-500 dark:text-white/50 uppercase tracking-wider">Scenario</label>
