@@ -45,7 +45,7 @@ function buildSlices(income, savings, expenseItems) {
 
 function OtherExpensesDetail({ items }) {
   return (
-    <span className="pointer-events-none absolute z-20 left-0 top-full mt-2 hidden group-hover:block group-focus-within:block w-64 rounded-lg bg-slate-800 dark:bg-black px-3 py-2 text-xs text-white shadow-lg">
+    <span className="pointer-events-none absolute z-20 left-0 bottom-full mb-2 hidden group-hover:block group-focus-within:block w-64 rounded-lg bg-slate-800 dark:bg-black px-3 py-2 text-xs text-white shadow-lg">
       <span className="block font-semibold mb-1">Included in Other Expenses</span>
       <span className="block space-y-0.5">
         {items.map((it) => (
