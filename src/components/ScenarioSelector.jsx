@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Copy, Pencil, Trash2, Plus, Check, X } from 'lucide-react';
+import { Copy, Pencil, Trash2, Plus, Check, X, ChevronDown } from 'lucide-react';
+import { formatCurrency } from '../lib/format';
 
 const PAGE_COPY = {
   dashboard: {
@@ -14,6 +15,7 @@ const PAGE_COPY = {
 
 export function ScenarioSelector({
   page,
+  income,
   scenarios,
   selectedScenarioId,
   onSelectScenario,
@@ -61,6 +63,10 @@ export function ScenarioSelector({
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-800 dark:text-white/90">{title}</h1>
           <p className="text-slate-500 dark:text-white/60 mt-1">{subtitle}</p>
         </div>
+        <div className="flex flex-col items-start md:items-center gap-1 shrink-0">
+          <span className="text-xs font-semibold text-slate-500 dark:text-white/50 uppercase tracking-wider">Gross Annual Income</span>
+          <span className="text-lg font-bold text-slate-800 dark:text-white/90 tabular-nums">{formatCurrency(income)}</span>
+        </div>
         <div className="flex flex-col gap-1 w-full md:w-auto">
           <label className="block text-xs font-semibold text-slate-500 dark:text-white/50 uppercase tracking-wider">Scenario</label>
           {renaming ? (
@@ -101,17 +107,20 @@ export function ScenarioSelector({
             </div>
           ) : (
             <div className="flex items-center gap-1.5 flex-wrap">
-              <select
-                value={selectedScenarioId}
-                onChange={(e) => onSelectScenario(e.target.value)}
-                className="bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/20 text-slate-800 dark:text-white/90 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 transition-colors min-w-[170px] max-w-full"
-              >
-                {scenarios.map((s) => (
-                  <option key={s.id} value={s.id} className="bg-white dark:bg-[#1e1e1e] text-slate-800 dark:text-white">
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={selectedScenarioId}
+                  onChange={(e) => onSelectScenario(e.target.value)}
+                  className="appearance-none bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/20 hover:border-slate-400 dark:hover:border-white/30 text-slate-800 dark:text-white/90 text-sm font-medium rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 block pl-3 pr-9 py-2.5 transition-colors min-w-[170px] max-w-full"
+                >
+                  {scenarios.map((s) => (
+                    <option key={s.id} value={s.id} className="bg-white dark:bg-[#1e1e1e] text-slate-800 dark:text-white">
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40" />
+              </div>
               <button
                 type="button"
                 onClick={startRename}

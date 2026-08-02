@@ -254,6 +254,7 @@ export default function App() {
         <PageHeader page={page} onSelectPage={setPage} isDark={isDark} onToggleDark={setIsDark} />
         <ScenarioSelector
           page={page}
+          income={incomeAmount}
           scenarios={scenarios}
           selectedScenarioId={selectedScenarioId}
           onSelectScenario={handleSelectScenario}
