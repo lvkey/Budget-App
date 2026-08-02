@@ -1,11 +1,14 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { PageHeader } from './components/PageHeader';
 import { ScenarioSelector } from './components/ScenarioSelector';
 import { ViewFrequencyToggle } from './components/ViewFrequencyToggle';
 import { SummaryCards } from './components/SummaryCards';
 import { IncomeEditor } from './components/IncomeEditor';
 import { ExpenseTable } from './components/ExpenseTable';
-import { IncomeChartsPage } from './components/IncomeChartsPage';
+
+const IncomeChartsPage = lazy(() =>
+  import('./components/IncomeChartsPage').then((m) => ({ default: m.IncomeChartsPage }))
+);
 import { EXAMPLE_EXPENSE_TEMPLATE, DAYS_IN_PERIOD, VIEW_FREQUENCIES, OVERVIEW_KEY, convertCost } from './lib/data';
 import { calculateAfterTaxIncome } from './lib/tax';
 import { useSupabaseAuth } from './lib/useSupabaseAuth';
@@ -250,7 +253,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#121212] text-slate-900 dark:text-white/90 p-3 sm:p-4 md:p-8 font-sans transition-colors">
-      <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
+      <main className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
         <PageHeader page={page} onSelectPage={setPage} isDark={isDark} onToggleDark={setIsDark} />
         <ScenarioSelector
           page={page}
@@ -304,18 +307,20 @@ export default function App() {
           </>
         )}
         {page === 'income' && (
-          <IncomeChartsPage
-            chartView={chartView}
-            onChangeChartView={setChartView}
-            pieProps={{
-              income: periodIncome,
-              savings: periodSavings,
-              expenses: processedData.map((item) => ({ id: item.id, name: item.name, value: item.displayCost })),
-            }}
-            barProps={{ data: processedData, viewFrequency, totalDisplayed }}
-          />
+          <Suspense fallback={<p className="text-sm text-slate-500 dark:text-white/60 text-center py-12">Loading charts…</p>}>
+            <IncomeChartsPage
+              chartView={chartView}
+              onChangeChartView={setChartView}
+              pieProps={{
+                income: periodIncome,
+                savings: periodSavings,
+                expenses: processedData.map((item) => ({ id: item.id, name: item.name, value: item.displayCost })),
+              }}
+              barProps={{ data: processedData, viewFrequency, totalDisplayed }}
+            />
+          </Suspense>
         )}
-      </div>
+      </main>
     </div>
   );
 }

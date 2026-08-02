@@ -6,7 +6,7 @@ function ToggleRow({ label, description, checked, onChange }) {
     <label className="flex items-center justify-between gap-4 py-2 cursor-pointer">
       <div className="min-w-0">
         <div className="text-sm font-medium text-slate-700 dark:text-white/80">{label}</div>
-        {description && <div className="text-xs text-slate-400 dark:text-white/40">{description}</div>}
+        {description && <div className="text-xs text-slate-500 dark:text-white/60">{description}</div>}
       </div>
       <button
         type="button"

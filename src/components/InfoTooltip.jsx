@@ -6,7 +6,7 @@ export function InfoTooltip({ text }) {
     <span className="relative inline-flex shrink-0 group align-middle ml-1.5">
       <button
         type="button"
-        className="flex items-center text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-white/70 focus:text-slate-600 dark:focus:text-white/70 focus:outline-none"
+        className="flex items-center text-slate-500 dark:text-white/60 hover:text-slate-600 dark:hover:text-white/70 focus:text-slate-600 dark:focus:text-white/70 focus:outline-none"
         aria-label="More details"
       >
         <Info size={14} />

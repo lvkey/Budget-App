@@ -121,6 +121,7 @@ export function ExpenseTable({
                       <select
                         value={item.freq}
                         onChange={(e) => onChangeField(item.id, 'freq', e.target.value)}
+                        aria-label={`Frequency for ${item.name || 'expense'}`}
                         className={inputClass}
                       >
                         {FREQ_OPTIONS.map((f) => (
@@ -137,7 +138,7 @@ export function ExpenseTable({
                 <td className="px-6 py-4">
                   {editing ? (
                     <div className="flex items-center gap-1 max-w-[140px]">
-                      <span className="text-slate-400 dark:text-white/40">$</span>
+                      <span className="text-slate-500 dark:text-white/60">$</span>
                       <MoneyInput
                         value={item.baseCost}
                         onChange={(value) => onChangeAmount(item.id, value)}
@@ -158,7 +159,7 @@ export function ExpenseTable({
                     <button
                       type="button"
                       onClick={() => onRemoveExpense(item.id)}
-                      className="text-slate-400 dark:text-white/40 hover:text-red-500 rounded p-1 transition-colors"
+                      className="text-slate-500 dark:text-white/60 hover:text-red-500 rounded p-1 transition-colors"
                       aria-label={`Remove ${item.name || 'expense'}`}
                     >
                       <Trash2 size={16} />
@@ -169,7 +170,7 @@ export function ExpenseTable({
             ))}
             {data.length === 0 && (
               <tr>
-                <td colSpan={totalColSpan + 1 + (editing ? 1 : 0)} className="px-6 py-10 text-center text-slate-400 dark:text-white/40">
+                <td colSpan={totalColSpan + 1 + (editing ? 1 : 0)} className="px-6 py-10 text-center text-slate-500 dark:text-white/60">
                   No expenses yet
                 </td>
               </tr>

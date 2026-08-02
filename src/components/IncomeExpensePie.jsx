@@ -100,7 +100,7 @@ function LegendRow({ slice, isHovered, onHover, onLeave }) {
       </div>
       <div className="text-right shrink-0 pl-2">
         <div className="text-sm font-semibold text-slate-800 dark:text-white/90 tabular-nums">{formatCurrency(slice.value)}</div>
-        <div className="text-xs text-slate-400 dark:text-white/40 tabular-nums">{slice.pct.toFixed(1)}%</div>
+        <div className="text-xs text-slate-500 dark:text-white/60 tabular-nums">{slice.pct.toFixed(1)}%</div>
       </div>
       {isGroup && <GroupDetail label={slice.label} items={slice.items} />}
     </div>
@@ -150,7 +150,7 @@ export function IncomeExpensePie({ income, savings, expenses, periodLabel }) {
               <text x="100" y="94" textAnchor="middle" className="fill-slate-800 dark:fill-white" style={{ fontSize: 15, fontWeight: 700 }}>
                 {formatCurrency(hovered.value)}
               </text>
-              <text x="100" y="112" textAnchor="middle" className="fill-slate-400 dark:fill-white/50" style={{ fontSize: 10 }}>
+              <text x="100" y="112" textAnchor="middle" className="fill-slate-500 dark:fill-white/60" style={{ fontSize: 10 }}>
                 {hovered.label} &middot; {hovered.pct.toFixed(1)}%
               </text>
             </>
@@ -159,7 +159,7 @@ export function IncomeExpensePie({ income, savings, expenses, periodLabel }) {
               <text x="100" y="96" textAnchor="middle" className="fill-slate-800 dark:fill-white" style={{ fontSize: 20, fontWeight: 700 }}>
                 {formatCurrency(income)}
               </text>
-              <text x="100" y="117" textAnchor="middle" className="fill-slate-400 dark:fill-white/50" style={{ fontSize: 11 }}>
+              <text x="100" y="117" textAnchor="middle" className="fill-slate-500 dark:fill-white/60" style={{ fontSize: 11 }}>
                 {periodLabel.toLowerCase()} income
               </text>
             </>

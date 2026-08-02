@@ -99,7 +99,7 @@ export function ScenarioSelector({
               <button
                 type="button"
                 onClick={() => setRenaming(false)}
-                className="text-slate-400 dark:text-white/40 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg p-2.5 transition-colors"
+                className="text-slate-500 dark:text-white/60 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg p-2.5 transition-colors"
                 aria-label="Cancel rename"
               >
                 <X size={16} />
@@ -111,6 +111,7 @@ export function ScenarioSelector({
                 <select
                   value={selectedScenarioId}
                   onChange={(e) => onSelectScenario(e.target.value)}
+                  aria-label="Scenario"
                   className="appearance-none bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/20 hover:border-slate-400 dark:hover:border-white/30 text-slate-800 dark:text-white/90 text-sm font-medium rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 block pl-3 pr-9 py-2.5 transition-colors min-w-[170px] max-w-full"
                 >
                   {scenarios.map((s) => (
@@ -119,12 +120,12 @@ export function ScenarioSelector({
                     </option>
                   ))}
                 </select>
-                <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40" />
+                <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-white/60" />
               </div>
               <button
                 type="button"
                 onClick={startRename}
-                className="text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-white/80 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg p-2.5 transition-colors"
+                className="text-slate-500 dark:text-white/60 hover:text-slate-600 dark:hover:text-white/80 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg p-2.5 transition-colors"
                 aria-label="Rename scenario"
               >
                 <Pencil size={16} />
@@ -132,7 +133,7 @@ export function ScenarioSelector({
               <button
                 type="button"
                 onClick={() => onCopyScenario(selectedScenarioId)}
-                className="text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-white/80 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg p-2.5 transition-colors"
+                className="text-slate-500 dark:text-white/60 hover:text-slate-600 dark:hover:text-white/80 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg p-2.5 transition-colors"
                 aria-label="Copy scenario"
               >
                 <Copy size={16} />
@@ -140,7 +141,7 @@ export function ScenarioSelector({
               <button
                 type="button"
                 onClick={onCreateScenario}
-                className="text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-white/80 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg p-2.5 transition-colors"
+                className="text-slate-500 dark:text-white/60 hover:text-slate-600 dark:hover:text-white/80 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg p-2.5 transition-colors"
                 aria-label="New scenario"
               >
                 <Plus size={16} />
@@ -149,7 +150,7 @@ export function ScenarioSelector({
                 type="button"
                 onClick={() => onDeleteScenario(selectedScenarioId)}
                 disabled={scenarios.length <= 1}
-                className="text-slate-400 dark:text-white/40 hover:text-red-500 disabled:opacity-30 disabled:hover:text-slate-400 dark:disabled:hover:text-white/40 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg p-2.5 transition-colors"
+                className="text-slate-500 dark:text-white/60 hover:text-red-500 disabled:opacity-30 disabled:hover:text-slate-400 dark:disabled:hover:text-white/40 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg p-2.5 transition-colors"
                 aria-label="Delete scenario"
               >
                 <Trash2 size={16} />

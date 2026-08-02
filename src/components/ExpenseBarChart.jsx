@@ -65,7 +65,7 @@ export function ExpenseBarChart({ data, totalDisplayed }) {
 
       <div className="mt-4 grid w-full min-w-0" style={{ gridTemplateColumns: ROW_TEMPLATE }}>
         <div />
-        <div className="relative h-4 text-[10px] sm:text-[11px] text-slate-400 dark:text-white/40">
+        <div className="relative h-4 text-[10px] sm:text-[11px] text-slate-500 dark:text-white/60">
           {ticks.map((t, i) => {
             const style =
               i === 0
