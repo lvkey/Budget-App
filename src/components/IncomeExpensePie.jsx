@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { formatCurrency } from '../lib/format';
+import { categorizeExpenseName } from '../lib/expenseCategories';
 
 const R = 80;
 const STROKE = 28;
 const CIRCUMFERENCE = 2 * Math.PI * R;
 const GAP = CIRCUMFERENCE * 0.006;
-const OTHER_THRESHOLD = 0.04;
+const OTHER_THRESHOLD = 0.05;
 const MAX_CATEGORY_SLICES = 7;
+const FALLBACK_GROUP_NAME = 'Other Expenses';
 
 const SAVINGS_COLOR = '#008300';
-const OTHER_COLOR = '#94a3b8';
 const CATEGORY_PALETTE = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#4a3aa7', '#e34948'];
+const GROUP_PALETTE = ['#94a3b8', '#78716c', '#a1a1aa', '#8a8f98', '#71717a', '#9ca3af'];
 
 function buildSlices(income, savings, expenseItems) {
   const positiveExpenses = expenseItems.filter((e) => e.value > 0);
@@ -24,12 +26,32 @@ function buildSlices(income, savings, expenseItems) {
   const below = [];
   sorted.forEach((e) => (e.value >= threshold ? above : below).push(e));
   while (above.length > MAX_CATEGORY_SLICES) below.push(above.pop());
-  const otherValue = below.reduce((sum, e) => sum + e.value, 0);
+
+  // Below-threshold expenses are lumped by category (e.g. Utilities, Vehicle)
+  // instead of one generic bucket, so the chart stays readable without hiding
+  // what those small expenses actually are. Unmatched ones fall back to
+  // "Other Expenses".
+  const groupOrder = [];
+  const groupsByName = new Map();
+  below.forEach((e) => {
+    const name = categorizeExpenseName(e.name) || FALLBACK_GROUP_NAME;
+    if (!groupsByName.has(name)) {
+      groupsByName.set(name, []);
+      groupOrder.push(name);
+    }
+    groupsByName.get(name).push(e);
+  });
+  const groups = groupOrder
+    .map((name) => ({ name, items: groupsByName.get(name), value: groupsByName.get(name).reduce((sum, e) => sum + e.value, 0) }))
+    .sort((a, b) => (a.name === FALLBACK_GROUP_NAME ? 1 : b.name === FALLBACK_GROUP_NAME ? -1 : b.value - a.value));
 
   const slices = [];
   if (savings > 0) slices.push({ key: 'savings', label: 'Savings', value: savings, color: SAVINGS_COLOR, kind: 'savings' });
   above.forEach((e, i) => slices.push({ key: e.id, label: e.name || 'Untitled expense', value: e.value, color: CATEGORY_PALETTE[i % CATEGORY_PALETTE.length], kind: 'expense' }));
-  if (otherValue > 0) slices.push({ key: 'other', label: 'Other Expenses', value: otherValue, color: OTHER_COLOR, kind: 'other', items: below });
+  groups.forEach((g, i) => {
+    if (g.value <= 0) return;
+    slices.push({ key: `group-${g.name}`, label: g.name, value: g.value, color: GROUP_PALETTE[i % GROUP_PALETTE.length], kind: 'group', items: g.items });
+  });
 
   let cursor = 0;
   const positioned = slices.map((s) => {
@@ -43,10 +65,10 @@ function buildSlices(income, savings, expenseItems) {
   return { slices: positioned, overspend };
 }
 
-function OtherExpensesDetail({ items }) {
+function GroupDetail({ label, items }) {
   return (
     <span className="pointer-events-none absolute z-20 left-0 bottom-full mb-2 hidden group-hover:block group-focus-within:block w-64 rounded-lg bg-slate-800 dark:bg-black px-3 py-2 text-xs text-white shadow-lg">
-      <span className="block font-semibold mb-1">Included in Other Expenses</span>
+      <span className="block font-semibold mb-1">Included in {label}</span>
       <span className="block space-y-0.5">
         {items.map((it) => (
           <span key={it.id} className="flex justify-between gap-3">
@@ -60,7 +82,7 @@ function OtherExpensesDetail({ items }) {
 }
 
 function LegendRow({ slice, isHovered, onHover, onLeave }) {
-  const isOther = slice.kind === 'other';
+  const isGroup = slice.kind === 'group';
   return (
     <div
       tabIndex={0}
@@ -80,7 +102,7 @@ function LegendRow({ slice, isHovered, onHover, onLeave }) {
         <div className="text-sm font-semibold text-slate-800 dark:text-white/90 tabular-nums">{formatCurrency(slice.value)}</div>
         <div className="text-xs text-slate-400 dark:text-white/40 tabular-nums">{slice.pct.toFixed(1)}%</div>
       </div>
-      {isOther && <OtherExpensesDetail items={slice.items} />}
+      {isGroup && <GroupDetail label={slice.label} items={slice.items} />}
     </div>
   );
 }
