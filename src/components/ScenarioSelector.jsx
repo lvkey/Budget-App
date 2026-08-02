@@ -4,7 +4,7 @@ import { formatCurrency } from '../lib/format';
 
 const PAGE_COPY = {
   dashboard: {
-    title: 'Financial Trajectory',
+    title: 'Ledgr',
     subtitle: 'Enter your income and expenses to project your savings',
   },
   income: {
