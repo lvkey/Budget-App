@@ -7,7 +7,9 @@ import { MoneyInput } from './MoneyInput';
 export function ExpenseTable({
   data,
   totalDisplayed,
+  totalAnnual,
   viewFrequency,
+  isOverview,
   editing,
   onToggleEdit,
   onChangeAmount,
@@ -18,12 +20,12 @@ export function ExpenseTable({
   sortConfig,
   onSort,
 }) {
-  const showFreq = editing || viewFrequency.key === 'Year';
+  const showFreq = editing || isOverview || viewFrequency.key === 'Year';
   const columns = [
     ['name', 'Expense'],
     ...(showFreq ? [['freq', 'Frequency']] : []),
     ['baseCost', 'Cost'],
-    ['displayCost', `${viewFrequency.adjective} Total`],
+    ...(isOverview ? [] : [['displayCost', `${viewFrequency.adjective} Total`]]),
   ];
   const totalColSpan = columns.length - 1;
   const inputClass = 'bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/20 rounded-md px-2 py-1.5 text-slate-800 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400';
@@ -146,9 +148,11 @@ export function ExpenseTable({
                     formatCurrency(item.baseCost)
                   )}
                 </td>
-                <td className="px-6 py-4 text-right font-semibold text-slate-700 dark:text-white/90">
-                  {formatCurrency(item.displayCost)}
-                </td>
+                {!isOverview && (
+                  <td className="px-6 py-4 text-right font-semibold text-slate-700 dark:text-white/90">
+                    {formatCurrency(item.displayCost)}
+                  </td>
+                )}
                 {editing && (
                   <td className="px-4 py-4 text-center">
                     <button
@@ -171,8 +175,8 @@ export function ExpenseTable({
               </tr>
             )}
             <tr className="bg-slate-50 dark:bg-white/5 border-t-2 border-slate-200 dark:border-white/10 font-bold text-slate-800 dark:text-white/90 text-base">
-              <td className="px-6 py-4" colSpan={totalColSpan}>Total {viewFrequency.adjective} Expenses</td>
-              <td className="px-6 py-4 text-right">{formatCurrency(totalDisplayed)}</td>
+              <td className="px-6 py-4" colSpan={totalColSpan}>Total {isOverview ? 'Annual' : viewFrequency.adjective} Expenses</td>
+              <td className="px-6 py-4 text-right">{formatCurrency(isOverview ? totalAnnual : totalDisplayed)}</td>
               {editing && <td className="px-4 py-4" />}
             </tr>
           </tbody>

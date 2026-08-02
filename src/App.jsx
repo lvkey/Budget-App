@@ -193,7 +193,9 @@ export default function App() {
             <ExpenseTable
               data={processedData}
               totalDisplayed={totalDisplayed}
+              totalAnnual={totalAnnualExpenses}
               viewFrequency={viewFrequency}
+              isOverview={viewFrequencyKey === OVERVIEW_KEY}
               editing={editing}
               onToggleEdit={() => setEditing((e) => !e)}
               onChangeAmount={handleChangeAmount}
