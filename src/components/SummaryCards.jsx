@@ -1,6 +1,5 @@
 import { Wallet, PiggyBank, TrendingUp, CalendarDays } from 'lucide-react';
 import { formatCurrency, formatIncome } from '../lib/format';
-import { convertCost, VIEW_FREQUENCIES, OVERVIEW_KEY } from '../lib/data';
 
 function amountClass(value, base) {
   return value < 0 ? `${base} text-red-500 dark:text-red-400` : base;
@@ -33,17 +32,12 @@ function Card({ label, icon: Icon, value, hero }) {
 
 const HORIZON_ICONS = [CalendarDays, PiggyBank, TrendingUp, TrendingUp];
 
-export function SummaryCards({ income, weeklySavings, viewFrequencyKey }) {
-  const isOverview = viewFrequencyKey === OVERVIEW_KEY;
-  const freq = VIEW_FREQUENCIES.find((f) => f.key === viewFrequencyKey);
-  const savingsValue = isOverview || !freq ? weeklySavings : convertCost(weeklySavings, 'Week', freq.key);
-  const savingsLabel = isOverview || !freq ? 'Weekly Savings' : `${freq.adjective} Savings`;
-
+export function SummaryCards({ isOverview, income, periodIncome, periodSavings, annualSavings, periodLabel }) {
   if (!isOverview) {
     return (
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
-        <Card label="Annual Income" icon={Wallet} value={income} hero />
-        <Card label={savingsLabel} icon={PiggyBank} value={savingsValue} />
+        <Card label={`${periodLabel} Income`} icon={Wallet} value={periodIncome} hero />
+        <Card label={`${periodLabel} Savings`} icon={PiggyBank} value={periodSavings} />
       </div>
     );
   }
@@ -51,9 +45,9 @@ export function SummaryCards({ income, weeklySavings, viewFrequencyKey }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
       <Card label="Annual Income" icon={Wallet} value={income} hero />
-      <Card label="Weekly Savings" icon={PiggyBank} value={weeklySavings} />
+      <Card label="Weekly Savings" icon={PiggyBank} value={periodSavings} />
       {[1, 2, 3, 5].map((years, i) => (
-        <Card key={years} label={`${years}-Year Horizon`} icon={HORIZON_ICONS[i]} value={weeklySavings * 52 * years} />
+        <Card key={years} label={`${years}-Year Horizon`} icon={HORIZON_ICONS[i]} value={annualSavings * years} />
       ))}
     </div>
   );

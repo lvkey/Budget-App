@@ -85,14 +85,14 @@ function LegendRow({ slice, isHovered, onHover, onLeave }) {
   );
 }
 
-export function IncomeExpensePie({ income, savings, expenses }) {
+export function IncomeExpensePie({ income, savings, expenses, periodLabel }) {
   const [hoveredKey, setHoveredKey] = useState(null);
   const { slices, overspend } = buildSlices(income, savings, expenses);
 
   if (income <= 0 && slices.length === 0) {
     return (
       <div className="py-12 text-center text-slate-500 dark:text-white/50">
-        Add an annual income and some expenses to see this chart
+        Add an income and some expenses to see this chart
       </div>
     );
   }
@@ -138,7 +138,7 @@ export function IncomeExpensePie({ income, savings, expenses }) {
                 {formatCurrency(income)}
               </text>
               <text x="100" y="117" textAnchor="middle" className="fill-slate-400 dark:fill-white/50" style={{ fontSize: 11 }}>
-                annual income
+                {periodLabel.toLowerCase()} income
               </text>
             </>
           )}
@@ -157,7 +157,7 @@ export function IncomeExpensePie({ income, savings, expenses }) {
       </div>
       {overspend > 0 && (
         <p className="mt-4 text-xs text-red-500 dark:text-red-400">
-          Expenses exceed annual income by {formatCurrency(overspend)}
+          Expenses exceed {periodLabel.toLowerCase()} income by {formatCurrency(overspend)}
         </p>
       )}
     </div>

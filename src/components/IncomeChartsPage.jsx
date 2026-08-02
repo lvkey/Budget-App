@@ -3,9 +3,10 @@ import { IncomeExpensePie } from './IncomeExpensePie';
 import { ExpenseBarChart } from './ExpenseBarChart';
 
 export function IncomeChartsPage({ chartView, onChangeChartView, pieProps, barProps }) {
+  const periodLabel = barProps.viewFrequency.adjective.toLowerCase();
   const subtitle = chartView === 'pie'
-    ? 'How your annual income splits across savings and each expense category'
-    : `Ranked by ${barProps.viewFrequency.adjective.toLowerCase()} cost, highest first`;
+    ? `How your ${periodLabel} income splits across savings and each expense category`
+    : `Ranked by ${periodLabel} cost, highest first`;
 
   return (
     <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-sm border border-slate-200 dark:border-white/10 p-4 sm:p-6">
@@ -41,7 +42,7 @@ export function IncomeChartsPage({ chartView, onChangeChartView, pieProps, barPr
           </button>
         </div>
       </div>
-      {chartView === 'pie' ? <IncomeExpensePie {...pieProps} /> : <ExpenseBarChart {...barProps} />}
+      {chartView === 'pie' ? <IncomeExpensePie {...pieProps} periodLabel={barProps.viewFrequency.adjective} /> : <ExpenseBarChart {...barProps} />}
     </div>
   );
 }

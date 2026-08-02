@@ -6,7 +6,7 @@ import { SummaryCards } from './components/SummaryCards';
 import { IncomeEditor } from './components/IncomeEditor';
 import { ExpenseTable } from './components/ExpenseTable';
 import { IncomeChartsPage } from './components/IncomeChartsPage';
-import { DEFAULT_SCENARIOS, EXAMPLE_EXPENSE_TEMPLATE, DAYS_IN_PERIOD, VIEW_FREQUENCIES, OVERVIEW_KEY } from './lib/data';
+import { DEFAULT_SCENARIOS, EXAMPLE_EXPENSE_TEMPLATE, DAYS_IN_PERIOD, VIEW_FREQUENCIES, OVERVIEW_KEY, convertCost } from './lib/data';
 import { useLocalStorageState } from './lib/useLocalStorageState';
 import { useDarkMode } from './lib/useDarkMode';
 
@@ -40,6 +40,14 @@ export default function App() {
       setSelectedScenarioId(scenarios[0].id);
     }
   }, [scenarios, selectedScenarioId]);
+
+  // "Overview" is a Dashboard-only concept (it shows multi-year horizons rather
+  // than a single period), so the charts page always needs a concrete time frame.
+  useEffect(() => {
+    if (page === 'income' && viewFrequencyKey === OVERVIEW_KEY) {
+      setViewFrequencyKey('Week');
+    }
+  }, [page, viewFrequencyKey]);
 
   const currentScenario = scenarios.find((s) => s.id === selectedScenarioId) || scenarios[0];
   const incomeAmount = Number(currentScenario?.income) || 0;
@@ -148,15 +156,14 @@ export default function App() {
   }, [currentScenario, effectiveFreqKey, sortConfig]);
 
   const totalDisplayed = processedData.reduce((sum, item) => sum + item.displayCost, 0);
-  const annualExpenseItems = useMemo(
-    () => processedData.map((item) => ({ id: item.id, name: item.name, value: item.dailyCost * DAYS_IN_PERIOD.Year })),
-    [processedData]
-  );
-  const totalAnnualExpenses = annualExpenseItems.reduce((sum, item) => sum + item.value, 0);
+  const totalAnnualExpenses = processedData.reduce((sum, item) => sum + item.dailyCost * DAYS_IN_PERIOD.Year, 0);
   // Savings is derived, not tracked independently, so it always reconciles with
   // income and expenses instead of drifting out of sync with them.
   const annualSavings = incomeAmount - totalAnnualExpenses;
-  const weeklySavings = annualSavings / 52;
+  // Income and savings both convert to whichever time frame is selected, so the
+  // cards and charts always describe the same period as the expense table.
+  const periodIncome = convertCost(incomeAmount, 'Year', effectiveFreqKey);
+  const periodSavings = periodIncome - totalDisplayed;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#121212] text-slate-900 dark:text-white/90 p-3 sm:p-4 md:p-8 font-sans transition-colors">
@@ -171,8 +178,15 @@ export default function App() {
           onRenameScenario={handleRenameScenario}
           onDeleteScenario={handleDeleteScenario}
         />
-        <SummaryCards income={incomeAmount} weeklySavings={weeklySavings} viewFrequencyKey={viewFrequencyKey} />
-        <ViewFrequencyToggle value={viewFrequencyKey} onChange={setViewFrequencyKey} />
+        <SummaryCards
+          isOverview={viewFrequencyKey === OVERVIEW_KEY}
+          income={incomeAmount}
+          periodIncome={periodIncome}
+          periodSavings={periodSavings}
+          annualSavings={annualSavings}
+          periodLabel={viewFrequency.adjective}
+        />
+        <ViewFrequencyToggle value={viewFrequencyKey} onChange={setViewFrequencyKey} hideOverview={page === 'income'} />
         {page === 'dashboard' && (
           <>
             {editing && <IncomeEditor income={incomeAmount} onChangeIncome={handleChangeIncome} />}
@@ -196,7 +210,11 @@ export default function App() {
           <IncomeChartsPage
             chartView={chartView}
             onChangeChartView={setChartView}
-            pieProps={{ income: incomeAmount, savings: annualSavings, expenses: annualExpenseItems }}
+            pieProps={{
+              income: periodIncome,
+              savings: periodSavings,
+              expenses: processedData.map((item) => ({ id: item.id, name: item.name, value: item.displayCost })),
+            }}
             barProps={{ data: processedData, viewFrequency, totalDisplayed }}
           />
         )}
