@@ -3,7 +3,7 @@ import { LayoutDashboard, PieChart, Receipt, Sun, Moon, Home } from 'lucide-reac
 const PAGES = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'income', label: 'Income vs Expenses', icon: PieChart },
-  { key: 'actuals', label: 'Actuals', icon: Receipt },
+  { key: 'actuals', label: 'Actual Spending', icon: Receipt },
 ];
 
 export function PageHeader({ page, onSelectPage, isDark, onToggleDark }) {

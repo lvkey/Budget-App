@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Upload, Plus, Trash2 } from 'lucide-react';
+import { Upload, Plus, Trash2, Eraser } from 'lucide-react';
 import { AccountUpgradeGate } from './AccountUpgradeGate';
 import { ColumnMapper } from './ColumnMapper';
 import { TransactionReview } from './TransactionReview';
@@ -11,12 +11,18 @@ import {
   insertProfile,
   deleteProfile,
   insertImportBatch,
+  deleteImportBatch,
+  fetchImportBatches,
   fetchTransactions,
   insertTransactions,
   updateTransaction,
   fetchMerchantRules,
   upsertMerchantRule,
 } from '../lib/statementsApi';
+
+function formatUploadDate(iso) {
+  return new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+}
 
 const inputClass =
   'bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/20 rounded-lg px-2.5 py-2 text-sm text-slate-800 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-blue-400';
@@ -28,6 +34,7 @@ export function ActualsPage({ userId, isAnonymous, upgradeAccount, scenarios }) 
   const [showNewProfile, setShowNewProfile] = useState(false);
 
   const [transactions, setTransactions] = useState([]);
+  const [importBatches, setImportBatches] = useState([]);
   const [merchantRules, setMerchantRules] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -52,11 +59,15 @@ export function ActualsPage({ userId, isAnonymous, upgradeAccount, scenarios }) 
   useEffect(() => {
     if (!selectedProfileId || !userId) {
       setTransactions([]);
+      setImportBatches([]);
       return;
     }
     setLoading(true);
-    fetchTransactions(userId, selectedProfileId)
-      .then(setTransactions)
+    Promise.all([fetchTransactions(userId, selectedProfileId), fetchImportBatches(userId, selectedProfileId)])
+      .then(([txns, batches]) => {
+        setTransactions(txns);
+        setImportBatches(batches);
+      })
       .finally(() => setLoading(false));
   }, [selectedProfileId, userId]);
 
@@ -124,6 +135,7 @@ export function ActualsPage({ userId, isAnonymous, upgradeAccount, scenarios }) 
 
       const inserted = await insertTransactions(rows);
       setTransactions((prev) => [...prev, ...inserted].sort((a, b) => a.txn_date.localeCompare(b.txn_date)));
+      setImportBatches((prev) => [...prev, batch]);
       setPendingFile(null);
     } catch (err) {
       setImportError(err.message || 'Import failed.');
@@ -149,6 +161,13 @@ export function ActualsPage({ userId, isAnonymous, upgradeAccount, scenarios }) 
   async function handleExcludeTransaction(transaction) {
     await updateTransaction(transaction.id, { excluded: true });
     setTransactions((prev) => prev.map((t) => (t.id === transaction.id ? { ...t, excluded: true } : t)));
+  }
+
+  async function handleClearBatch(batch) {
+    if (!window.confirm(`Clear the upload "${batch.filename}"? This removes all ${batch.row_count} transactions it added. This can't be undone.`)) return;
+    await deleteImportBatch(batch.id);
+    setImportBatches((prev) => prev.filter((b) => b.id !== batch.id));
+    setTransactions((prev) => prev.filter((t) => t.import_batch_id !== batch.id));
   }
 
   async function handleBulkConfirm(items) {
@@ -183,9 +202,9 @@ export function ActualsPage({ userId, isAnonymous, upgradeAccount, scenarios }) 
       <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-sm border border-slate-200 dark:border-white/10 p-4 sm:p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-slate-800 dark:text-white/90">Actuals</h1>
+            <h1 className="text-xl font-bold text-slate-800 dark:text-white/90">Actual Spending</h1>
             <p className="text-sm text-slate-500 dark:text-white/60 mt-1">
-              Import bank/credit card statements and see how real spending tracks against a budget.
+              Upload your bank or credit card statements to see how your real spending compares to your budget.
             </p>
           </div>
         </div>
@@ -294,6 +313,37 @@ export function ActualsPage({ userId, isAnonymous, upgradeAccount, scenarios }) 
         />
       )}
       {importing && <p className="text-sm text-slate-500 dark:text-white/60 text-center py-4">Importing…</p>}
+
+      {selectedProfileId && importBatches.length > 0 && (
+        <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-sm border border-slate-200 dark:border-white/10 overflow-hidden">
+          <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-white/10">
+            <h2 className="font-semibold text-slate-800 dark:text-white/90">Uploads</h2>
+            <p className="text-sm text-slate-500 dark:text-white/50 mt-1">
+              Uploaded the wrong file, or a duplicate? Clear it here — this removes only that upload's transactions.
+            </p>
+          </div>
+          <div className="divide-y divide-slate-100 dark:divide-white/10">
+            {importBatches.map((batch) => (
+              <div key={batch.id} className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-slate-800 dark:text-white/90 truncate">{batch.filename}</p>
+                  <p className="text-xs text-slate-500 dark:text-white/50 mt-0.5">
+                    {formatUploadDate(batch.created_at)} · {batch.row_count} transaction{batch.row_count === 1 ? '' : 's'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleClearBatch(batch)}
+                  className="flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-white/60 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg px-3 py-2 transition-colors shrink-0"
+                >
+                  <Eraser size={15} />
+                  Clear
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {!selectedProfileId ? (
         <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-sm border border-slate-200 dark:border-white/10 p-8 text-center text-sm text-slate-500 dark:text-white/50">

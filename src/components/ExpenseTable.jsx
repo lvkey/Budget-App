@@ -34,7 +34,7 @@ export function ExpenseTable({
     <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-sm border border-slate-200 dark:border-white/10 overflow-hidden">
       <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white/90">Dynamic Expense Breakdown</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white/90">Expense Breakdown</h2>
           <p className="text-sm text-slate-500 dark:text-white/50 mt-1">
             {editing ? 'Editing expenses — changes save automatically' : 'Click column headers to sort the table'}
           </p>

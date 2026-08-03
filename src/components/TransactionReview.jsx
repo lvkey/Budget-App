@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Check, X, CheckCheck } from 'lucide-react';
 import { formatCurrency } from '../lib/format';
 import { EXPENSE_CATEGORY_GROUPS } from '../lib/expenseCategories';
+import { InfoTooltip } from './InfoTooltip';
 
 const CATEGORY_NAMES = EXPENSE_CATEGORY_GROUPS.map((g) => g.name);
 
@@ -129,8 +130,18 @@ function ReviewSection({ tier, items, expenses, onConfirm, onExclude, onBulkConf
               <th className="px-4 py-2.5 font-semibold">Date</th>
               <th className="px-4 py-2.5 font-semibold">Description</th>
               <th className="px-4 py-2.5 font-semibold text-right">Amount</th>
-              <th className="px-4 py-2.5 font-semibold">Expense line</th>
-              <th className="px-4 py-2.5 font-semibold">Or category</th>
+              <th className="px-4 py-2.5 font-semibold">
+                <span className="inline-flex items-center">
+                  Match an expense
+                  <InfoTooltip text="Link this to one of your own budgeted expenses (e.g. Rent, Netflix) for exact, line-by-line tracking." />
+                </span>
+              </th>
+              <th className="px-4 py-2.5 font-semibold">
+                <span className="inline-flex items-center">
+                  Or a category
+                  <InfoTooltip text="No specific expense fits? Just file it under a general category (e.g. Groceries, Dining) instead." />
+                </span>
+              </th>
               <th className="px-4 py-2.5 font-semibold text-center">Action</th>
             </tr>
           </thead>
@@ -162,7 +173,9 @@ export function TransactionReview({ groups, expenses, onConfirm, onExclude, onBu
       <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-white/10">
         <h2 className="font-semibold text-slate-800 dark:text-white/90">Needs a quick check ({total})</h2>
         <p className="text-sm text-slate-500 dark:text-white/50 mt-1">
-          Grouped by how confident the guess is. Confirming remembers the merchant, so it's never asked again.
+          Grouped by how confident the guess is. For each one, either match it to one of your own expenses for exact
+          tracking, or just pick a general category if nothing specific fits. Confirming remembers the merchant, so
+          it's never asked again.
         </p>
       </div>
       <ReviewSection tier="confident" items={groups.confident} expenses={expenses} onConfirm={onConfirm} onExclude={onExclude} onBulkConfirm={onBulkConfirm} />

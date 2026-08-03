@@ -41,7 +41,7 @@ function buildRows(transactions, expenses) {
         const budgetedMonthly = expenses
           .filter((e) => categorizeExpenseName(e.name) === t.category)
           .reduce((sum, e) => sum + convertCost(Number(e.cost) || 0, e.freq, 'Month'), 0);
-        categoryRows.set(t.category, { key: `category-${t.category}`, label: `${t.category} (uncategorized)`, budgetedMonthly, actualByMonth: {} });
+        categoryRows.set(t.category, { key: `category-${t.category}`, label: `${t.category} (general)`, budgetedMonthly, actualByMonth: {} });
       }
       const row = categoryRows.get(t.category);
       row.actualByMonth[mk] = (row.actualByMonth[mk] || 0) + spend;
@@ -82,13 +82,13 @@ export function VarianceView({ transactions, scenario }) {
         <table className="w-full text-left text-sm">
           <thead className="text-xs uppercase bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-white/50 border-b border-slate-200 dark:border-white/10">
             <tr>
-              <th className="px-4 py-3 font-semibold">Line</th>
+              <th className="px-4 py-3 font-semibold">Expense</th>
               {months.map((m) => (
                 <th key={m} className="px-4 py-3 font-semibold text-right whitespace-nowrap">
                   {monthLabel(m)}
                 </th>
               ))}
-              <th className="px-4 py-3 font-semibold text-right whitespace-nowrap">Budgeted / mo</th>
+              <th className="px-4 py-3 font-semibold text-right whitespace-nowrap">Budgeted (Monthly)</th>
             </tr>
           </thead>
           <tbody>
