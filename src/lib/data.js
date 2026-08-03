@@ -38,7 +38,18 @@ export const EXAMPLE_EXPENSE_TEMPLATE = [
 ];
 
 function scenario(id, name, income, expenses) {
-  return { id, name, income, expenses, medicareLevy: true, hecsHelp: false };
+  return {
+    id,
+    name,
+    income,
+    expenses,
+    medicareLevy: true,
+    hecsHelp: false,
+    partnerIncome: null,
+    partnerHecsHelp: false,
+    hasPrivateHospitalCover: null,
+    dependentChildren: 0,
+  };
 }
 
 // Generic placeholder numbers for brand-new visitors — not anyone's real budget.

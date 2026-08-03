@@ -1,8 +1,9 @@
-import { LayoutDashboard, PieChart, Sun, Moon, Home } from 'lucide-react';
+import { LayoutDashboard, PieChart, Receipt, Sun, Moon, Home } from 'lucide-react';
 
 const PAGES = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'income', label: 'Income vs Expenses', icon: PieChart },
+  { key: 'actuals', label: 'Actuals', icon: Receipt },
 ];
 
 export function PageHeader({ page, onSelectPage, isDark, onToggleDark }) {

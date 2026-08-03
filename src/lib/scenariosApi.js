@@ -28,6 +28,10 @@ export async function fetchScenarios(userId) {
     income: Number(s.income),
     medicareLevy: s.medicare_levy ?? true,
     hecsHelp: s.hecs_help ?? false,
+    partnerIncome: s.partner_income === null ? null : Number(s.partner_income),
+    partnerHecsHelp: s.partner_hecs_help ?? false,
+    hasPrivateHospitalCover: s.has_private_hospital_cover,
+    dependentChildren: s.dependent_children ?? 0,
     expenses: expenseRows.filter((e) => e.scenario_id === s.id).map(expenseRowToLocal),
   }));
 }
@@ -75,6 +79,10 @@ export async function insertScenarioWithExpenses(scenario, userId, position) {
     income: scenario.income,
     medicare_levy: scenario.medicareLevy ?? true,
     hecs_help: scenario.hecsHelp ?? false,
+    partner_income: scenario.partnerIncome ?? null,
+    partner_hecs_help: scenario.partnerHecsHelp ?? false,
+    has_private_hospital_cover: scenario.hasPrivateHospitalCover ?? null,
+    dependent_children: scenario.dependentChildren ?? 0,
     position,
   });
   if (scenarioError) throw scenarioError;
@@ -133,6 +141,10 @@ export async function seedNewUser(userId) {
       income: Number(s.income) || 0,
       medicareLevy: s.medicareLevy ?? true,
       hecsHelp: s.hecsHelp ?? false,
+      partnerIncome: s.partnerIncome ?? null,
+      partnerHecsHelp: s.partnerHecsHelp ?? false,
+      hasPrivateHospitalCover: s.hasPrivateHospitalCover ?? null,
+      dependentChildren: s.dependentChildren ?? 0,
       expenses: (s.expenses || []).map((e) => ({
         id: crypto.randomUUID(),
         name: e.name,
@@ -152,6 +164,10 @@ export async function seedNewUser(userId) {
       income: scenario.income,
       medicare_levy: scenario.medicareLevy,
       hecs_help: scenario.hecsHelp,
+      partner_income: scenario.partnerIncome,
+      partner_hecs_help: scenario.partnerHecsHelp,
+      has_private_hospital_cover: scenario.hasPrivateHospitalCover,
+      dependent_children: scenario.dependentChildren,
       position: i,
     });
     if (scenarioError) throw scenarioError;

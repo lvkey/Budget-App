@@ -9,8 +9,9 @@ import { ExpenseTable } from './components/ExpenseTable';
 const IncomeChartsPage = lazy(() =>
   import('./components/IncomeChartsPage').then((m) => ({ default: m.IncomeChartsPage }))
 );
+const ActualsPage = lazy(() => import('./components/ActualsPage').then((m) => ({ default: m.ActualsPage })));
 import { EXAMPLE_EXPENSE_TEMPLATE, DAYS_IN_PERIOD, VIEW_FREQUENCIES, OVERVIEW_KEY, convertCost } from './lib/data';
-import { calculateAfterTaxIncome } from './lib/tax';
+import { calculateHousehold } from './lib/tax';
 import { useSupabaseAuth } from './lib/useSupabaseAuth';
 import { useScenariosState } from './lib/useScenariosState';
 import { useSelectedScenarioId } from './lib/useSelectedScenarioId';
@@ -46,7 +47,7 @@ export default function App() {
   const effectiveFreqKey = viewFrequencyKey === OVERVIEW_KEY ? 'Week' : viewFrequencyKey;
   const viewFrequency = VIEW_FREQUENCIES.find((f) => f.key === effectiveFreqKey);
 
-  const { userId, authLoading, authError } = useSupabaseAuth();
+  const { userId, isAnonymous, authLoading, authError, upgradeAccount } = useSupabaseAuth();
   const { scenarios, setScenarios, loading: scenariosLoading, error: scenariosError, retry } = useScenariosState(userId);
   const { selectedScenarioId, setSelectedScenarioId, loading: selectedLoading } = useSelectedScenarioId(userId, scenarios);
 
@@ -68,9 +69,19 @@ export default function App() {
   const incomeAmount = Number(currentScenario?.income) || 0;
   const medicareLevy = currentScenario?.medicareLevy ?? true;
   const hecsHelp = currentScenario?.hecsHelp ?? false;
+  const partnerIncome = currentScenario?.partnerIncome ?? null;
+  const partnerHecsHelp = currentScenario?.partnerHecsHelp ?? false;
+  const hasPrivateHospitalCover = currentScenario?.hasPrivateHospitalCover ?? null;
+  const dependentChildren = currentScenario?.dependentChildren ?? 0;
   // Every downstream figure (savings, charts, summary cards) works off the
-  // after-tax income - the gross amount is only used for editing.
-  const taxBreakdown = calculateAfterTaxIncome(incomeAmount, { medicareLevy, hecsHelp });
+  // after-tax household income - the gross amounts are only used for editing.
+  const taxBreakdown = calculateHousehold(incomeAmount, partnerIncome, {
+    medicareLevy,
+    primaryHecsHelp: hecsHelp,
+    partnerHecsHelp,
+    hasPrivateCover: hasPrivateHospitalCover ?? true,
+    dependentChildren,
+  });
   const netIncomeAmount = taxBreakdown.netIncome;
 
   const updateCurrentScenario = (updater) => {
@@ -139,6 +150,26 @@ export default function App() {
     updateScenario(selectedScenarioId, { hecs_help: value }).catch(console.error);
   };
 
+  const handleChangePartnerIncome = (value) => {
+    updateCurrentScenario((s) => ({ ...s, partnerIncome: value }));
+    updateScenario(selectedScenarioId, { partner_income: value }).catch(console.error);
+  };
+
+  const handleTogglePartnerHecsHelp = (value) => {
+    updateCurrentScenario((s) => ({ ...s, partnerHecsHelp: value }));
+    updateScenario(selectedScenarioId, { partner_hecs_help: value }).catch(console.error);
+  };
+
+  const handleToggleHasPrivateHospitalCover = (value) => {
+    updateCurrentScenario((s) => ({ ...s, hasPrivateHospitalCover: value }));
+    updateScenario(selectedScenarioId, { has_private_hospital_cover: value }).catch(console.error);
+  };
+
+  const handleChangeDependentChildren = (value) => {
+    updateCurrentScenario((s) => ({ ...s, dependentChildren: value }));
+    updateScenario(selectedScenarioId, { dependent_children: value }).catch(console.error);
+  };
+
   const handleClearCosts = () => {
     if (window.confirm('Clear all cost amounts back to $0.00 for this scenario? Expense names and frequencies are kept. This cannot be undone.')) {
       updateCurrentScenario((s) => ({ ...s, expenses: s.expenses.map((e) => ({ ...e, cost: 0 })) }));
@@ -161,6 +192,10 @@ export default function App() {
       income: 0,
       medicareLevy: true,
       hecsHelp: false,
+      partnerIncome: null,
+      partnerHecsHelp: false,
+      hasPrivateHospitalCover: null,
+      dependentChildren: 0,
       expenses: EXAMPLE_EXPENSE_TEMPLATE.map((e) => ({ ...e, id: crypto.randomUUID() })),
     };
     setScenarios((prev) => [...prev, newScenario]);
@@ -255,26 +290,30 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 dark:bg-[#121212] text-slate-900 dark:text-white/90 p-3 sm:p-4 md:p-8 font-sans transition-colors">
       <main className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
         <PageHeader page={page} onSelectPage={setPage} isDark={isDark} onToggleDark={setIsDark} />
-        <ScenarioSelector
-          page={page}
-          income={incomeAmount}
-          scenarios={scenarios}
-          selectedScenarioId={selectedScenarioId}
-          onSelectScenario={handleSelectScenario}
-          onCreateScenario={handleCreateScenario}
-          onCopyScenario={handleCopyScenario}
-          onRenameScenario={handleRenameScenario}
-          onDeleteScenario={handleDeleteScenario}
-        />
-        <SummaryCards
-          isOverview={viewFrequencyKey === OVERVIEW_KEY}
-          income={netIncomeAmount}
-          periodIncome={periodIncome}
-          periodSavings={periodSavings}
-          annualSavings={annualSavings}
-          periodLabel={viewFrequency.adjective}
-        />
-        <ViewFrequencyToggle value={viewFrequencyKey} onChange={setViewFrequencyKey} hideOverview={page === 'income'} />
+        {page !== 'actuals' && (
+          <>
+            <ScenarioSelector
+              page={page}
+              income={incomeAmount}
+              scenarios={scenarios}
+              selectedScenarioId={selectedScenarioId}
+              onSelectScenario={handleSelectScenario}
+              onCreateScenario={handleCreateScenario}
+              onCopyScenario={handleCopyScenario}
+              onRenameScenario={handleRenameScenario}
+              onDeleteScenario={handleDeleteScenario}
+            />
+            <SummaryCards
+              isOverview={viewFrequencyKey === OVERVIEW_KEY}
+              income={netIncomeAmount}
+              periodIncome={periodIncome}
+              periodSavings={periodSavings}
+              annualSavings={annualSavings}
+              periodLabel={viewFrequency.adjective}
+            />
+            <ViewFrequencyToggle value={viewFrequencyKey} onChange={setViewFrequencyKey} hideOverview={page === 'income'} />
+          </>
+        )}
         {page === 'dashboard' && (
           <>
             {editing && (
@@ -285,6 +324,15 @@ export default function App() {
                 hecsHelp={hecsHelp}
                 onToggleMedicareLevy={handleToggleMedicareLevy}
                 onToggleHecsHelp={handleToggleHecsHelp}
+                partnerIncome={partnerIncome}
+                onChangePartnerIncome={handleChangePartnerIncome}
+                partnerHecsHelp={partnerHecsHelp}
+                onTogglePartnerHecsHelp={handleTogglePartnerHecsHelp}
+                hasPrivateHospitalCover={hasPrivateHospitalCover}
+                onToggleHasPrivateHospitalCover={handleToggleHasPrivateHospitalCover}
+                dependentChildren={dependentChildren}
+                onChangeDependentChildren={handleChangeDependentChildren}
+                expenses={currentScenario?.expenses}
                 taxBreakdown={taxBreakdown}
               />
             )}
@@ -318,6 +366,11 @@ export default function App() {
               }}
               barProps={{ data: processedData, viewFrequency, totalDisplayed }}
             />
+          </Suspense>
+        )}
+        {page === 'actuals' && (
+          <Suspense fallback={<p className="text-sm text-slate-500 dark:text-white/60 text-center py-12">Loading…</p>}>
+            <ActualsPage userId={userId} isAnonymous={isAnonymous} upgradeAccount={upgradeAccount} scenarios={scenarios} />
           </Suspense>
         )}
       </main>
