@@ -34,7 +34,6 @@ export function ActualsPage({ userId, isAnonymous, upgradeAccount, scenarios }) 
   const [pendingFile, setPendingFile] = useState(null); // { headers, rows }
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState('');
-  const [suggestions, setSuggestions] = useState({});
   const fileInputRef = useRef(null);
 
   const [comparisonScenarioId, setComparisonScenarioId] = useState(scenarios?.[0]?.id ?? null);
@@ -116,21 +115,15 @@ export function ActualsPage({ userId, isAnonymous, upgradeAccount, scenarios }) 
         txn_date: t.txnDate,
         description: t.description,
         amount: t.amount,
-        matched_expense_id: matches[i].confidence === 'high' ? matches[i].matchedExpenseId : null,
-        category: matches[i].confidence === 'high' ? matches[i].category : null,
+        // Only a previously-confirmed merchant is applied without the user
+        // seeing it - everything else (however confident the guess) goes
+        // through review at least once.
+        matched_expense_id: matches[i].confidence === 'remembered' ? matches[i].matchedExpenseId : null,
+        category: matches[i].confidence === 'remembered' ? matches[i].category : null,
       }));
 
       const inserted = await insertTransactions(rows);
-
-      const newSuggestions = {};
-      inserted.forEach((row, i) => {
-        if (matches[i].confidence !== 'high') {
-          newSuggestions[row.id] = { matchedExpenseId: matches[i].matchedExpenseId, category: matches[i].category };
-        }
-      });
-      setSuggestions((prev) => ({ ...prev, ...newSuggestions }));
       setTransactions((prev) => [...prev, ...inserted].sort((a, b) => a.txn_date.localeCompare(b.txn_date)));
-      setProfiles((prev) => prev.map((p) => (p.id === selectedProfileId ? { ...p } : p)));
       setPendingFile(null);
     } catch (err) {
       setImportError(err.message || 'Import failed.');
@@ -158,10 +151,31 @@ export function ActualsPage({ userId, isAnonymous, upgradeAccount, scenarios }) 
     setTransactions((prev) => prev.map((t) => (t.id === transaction.id ? { ...t, excluded: true } : t)));
   }
 
+  async function handleBulkConfirm(items) {
+    await Promise.all(
+      items.map(({ transaction, suggestion }) =>
+        handleConfirmMatch(transaction, { matchedExpenseId: suggestion.matchedExpenseId, category: suggestion.category })
+      )
+    );
+  }
+
   const needsReview = useMemo(
     () => transactions.filter((t) => !t.excluded && !t.matched_expense_id && !t.category),
     [transactions]
   );
+  // Re-matched fresh on every render (cheap, pure) rather than cached from
+  // import time - a transaction confirmed elsewhere in the same batch
+  // immediately reclassifies anything else from that merchant too, and a
+  // page reload doesn't lose the suggestion for anything still pending.
+  const reviewGroups = useMemo(() => {
+    const groups = { confident: [], likely: [], unmatched: [] };
+    for (const transaction of needsReview) {
+      const suggestion = matchTransaction(transaction.description, { merchantRules, expenses: comparisonScenario?.expenses || [] });
+      const tier = suggestion.confidence === 'remembered' ? 'confident' : suggestion.confidence;
+      groups[tier].push({ transaction, suggestion });
+    }
+    return groups;
+  }, [needsReview, merchantRules, comparisonScenario]);
   const forComparison = useMemo(() => transactions.filter((t) => !t.excluded), [transactions]);
 
   return (
@@ -290,11 +304,11 @@ export function ActualsPage({ userId, isAnonymous, upgradeAccount, scenarios }) 
       ) : (
         <>
           <TransactionReview
-            transactions={needsReview}
+            groups={reviewGroups}
             expenses={comparisonScenario?.expenses || []}
-            suggestions={suggestions}
             onConfirm={handleConfirmMatch}
             onExclude={handleExcludeTransaction}
+            onBulkConfirm={handleBulkConfirm}
           />
           <VarianceView transactions={forComparison} scenario={comparisonScenario} />
         </>

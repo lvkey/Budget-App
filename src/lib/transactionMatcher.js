@@ -1,4 +1,5 @@
 import { categorizeExpenseName } from './expenseCategories';
+import { lookupCuratedMerchant } from './merchantDatabase';
 
 // A bare merchant name like "WOOLWORTHS 2841 SYDNEY" strips down to
 // "woolworths sydney" - stable across repeat visits to the same store, but
@@ -13,22 +14,37 @@ export function normalizeMerchantKey(description) {
   return words.slice(0, 3).join(' ');
 }
 
-// Matches a transaction description against, in confidence order:
-//   1. A remembered merchant_rules hit - high confidence, auto-applies.
-//   2. A substring match against the current scenario's own expense names.
-//   3. The existing category keyword list (src/lib/expenseCategories.js).
-//   4. Nothing - needs confirmation with no suggestion at all.
-// Only (1) is ever applied without the user seeing it first.
+// Confidence tiers, in the order they're checked:
+//   'remembered' - a merchant you've personally confirmed before. Auto-applies,
+//                   never shown again.
+//   'confident'  - a well-known merchant from the curated database (src/lib/
+//                   merchantDatabase.js). Pre-filled and easy to bulk-confirm,
+//                   but still shown once so a rare miscategorization can be caught.
+//   'likely'     - matches one of your own expense line names, or a generic
+//                   category keyword. A reasonable guess, worth a glance.
+//   'unmatched'  - no signal at all. Needs manual assignment.
+// Only 'remembered' is ever applied without the user seeing it.
 export function matchTransaction(description, { merchantRules = [], expenses = [] } = {}) {
   const merchantKey = normalizeMerchantKey(description);
 
   const rule = merchantRules.find((r) => r.merchant_key === merchantKey);
   if (rule) {
     return {
-      confidence: 'high',
+      confidence: 'remembered',
       merchantKey,
       matchedExpenseId: rule.matched_expense_id ?? null,
       category: rule.category ?? null,
+    };
+  }
+
+  const curatedCategory = lookupCuratedMerchant(description);
+  if (curatedCategory) {
+    return {
+      confidence: 'confident',
+      merchantKey,
+      matchedExpenseId: null,
+      category: curatedCategory,
+      suggestionReason: 'known-merchant',
     };
   }
 
@@ -36,7 +52,7 @@ export function matchTransaction(description, { merchantRules = [], expenses = [
   const expenseMatch = expenses.find((e) => e.name && lowerDescription.includes(e.name.toLowerCase()));
   if (expenseMatch) {
     return {
-      confidence: 'needs_confirmation',
+      confidence: 'likely',
       merchantKey,
       matchedExpenseId: expenseMatch.id,
       category: null,
@@ -47,7 +63,7 @@ export function matchTransaction(description, { merchantRules = [], expenses = [
   const category = categorizeExpenseName(description);
   if (category) {
     return {
-      confidence: 'needs_confirmation',
+      confidence: 'likely',
       merchantKey,
       matchedExpenseId: null,
       category,
@@ -55,5 +71,5 @@ export function matchTransaction(description, { merchantRules = [], expenses = [
     };
   }
 
-  return { confidence: 'needs_confirmation', merchantKey, matchedExpenseId: null, category: null, suggestionReason: 'none' };
+  return { confidence: 'unmatched', merchantKey, matchedExpenseId: null, category: null, suggestionReason: 'none' };
 }

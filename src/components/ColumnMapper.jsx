@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocalStorageState } from '../lib/useLocalStorageState';
-import { headerSignature } from '../lib/csvParser';
+import { headerSignature, guessColumnMapping } from '../lib/csvParser';
 
 const inputClass =
   'bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/20 rounded-lg px-2.5 py-2 text-sm text-slate-800 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-blue-400';
@@ -26,13 +26,16 @@ export function ColumnMapper({ headers, rows, onConfirm, onCancel }) {
   const [savedMappings, setSavedMappings] = useLocalStorageState('ledgr-csv-mappings', {});
   const savedMapping = savedMappings[signature];
 
+  const guess = useMemo(() => guessColumnMapping(headers), [headers]);
+  const usingGuess = !savedMapping && (guess.dateColumn || guess.descriptionColumn || guess.amountColumn || guess.debitColumn);
+
   const [useSaved, setUseSaved] = useState(Boolean(savedMapping));
-  const [amountMode, setAmountMode] = useState(savedMapping?.amountMode || 'single');
-  const [dateColumn, setDateColumn] = useState(savedMapping?.dateColumn || '');
-  const [descriptionColumn, setDescriptionColumn] = useState(savedMapping?.descriptionColumn || '');
-  const [amountColumn, setAmountColumn] = useState(savedMapping?.amountColumn || '');
-  const [debitColumn, setDebitColumn] = useState(savedMapping?.debitColumn || '');
-  const [creditColumn, setCreditColumn] = useState(savedMapping?.creditColumn || '');
+  const [amountMode, setAmountMode] = useState(savedMapping?.amountMode || guess.amountMode || 'single');
+  const [dateColumn, setDateColumn] = useState(savedMapping?.dateColumn || guess.dateColumn || '');
+  const [descriptionColumn, setDescriptionColumn] = useState(savedMapping?.descriptionColumn || guess.descriptionColumn || '');
+  const [amountColumn, setAmountColumn] = useState(savedMapping?.amountColumn || guess.amountColumn || '');
+  const [debitColumn, setDebitColumn] = useState(savedMapping?.debitColumn || guess.debitColumn || '');
+  const [creditColumn, setCreditColumn] = useState(savedMapping?.creditColumn || guess.creditColumn || '');
 
   if (useSaved && savedMapping) {
     return (
@@ -73,7 +76,10 @@ export function ColumnMapper({ headers, rows, onConfirm, onCancel }) {
       <div>
         <h2 className="font-semibold text-slate-800 dark:text-white/90">Map columns</h2>
         <p className="text-sm text-slate-500 dark:text-white/50 mt-1">
-          Tell us which column is which — this is only asked once per file format.
+          {usingGuess
+            ? 'We pre-filled our best guess from the column names below — double-check it before continuing.'
+            : 'Tell us which column is which'}{' '}
+          — this is only asked once per file format.
         </p>
       </div>
 

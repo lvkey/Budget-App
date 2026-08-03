@@ -6,12 +6,28 @@
 // Add more keywords/groups here as new kinds of recurring expenses come up.
 export const EXPENSE_CATEGORY_GROUPS = [
   {
+    name: 'Groceries',
+    keywords: ['groceries', 'grocery', 'supermarket'],
+  },
+  {
+    name: 'Dining',
+    keywords: ['restaurant', 'cafe', 'coffee', 'takeaway', 'take-away', 'dining', 'lunch', 'dinner'],
+  },
+  {
     name: 'Utilities',
-    keywords: ['water', 'electric', 'gas', 'internet', 'phone', 'mobile', 'utilit'],
+    keywords: ['water', 'electric', 'gas', 'internet', 'phone', 'mobile', 'utilit', 'broadband'],
   },
   {
     name: 'Vehicle',
     keywords: ['car', 'vehicle', 'rego', 'registration', 'fuel', 'petrol', 'parking', 'toll'],
+  },
+  {
+    name: 'Transport',
+    keywords: ['transport', 'rideshare', 'taxi', 'train', 'bus', 'tram', 'flight', 'travel'],
+  },
+  {
+    name: 'Shopping',
+    keywords: ['shopping', 'retail', 'clothing', 'homewares'],
   },
   {
     name: 'Subscriptions',
@@ -19,7 +35,7 @@ export const EXPENSE_CATEGORY_GROUPS = [
   },
   {
     name: 'Health & Fitness',
-    keywords: ['health', 'medical', 'physio', 'psych', 'dental', 'doctor', 'gym', 'fitness'],
+    keywords: ['health', 'medical', 'physio', 'psych', 'dental', 'doctor', 'gym', 'fitness', 'pharmacy'],
   },
   {
     name: 'Education',
