@@ -286,6 +286,7 @@ export default function App() {
                 onToggleMedicareLevy={handleToggleMedicareLevy}
                 onToggleHecsHelp={handleToggleHecsHelp}
                 taxBreakdown={taxBreakdown}
+                onToggleEdit={() => setEditing((e) => !e)}
               />
             )}
             <ExpenseTable
