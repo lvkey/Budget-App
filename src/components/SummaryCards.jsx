@@ -1,4 +1,4 @@
-import { Wallet, PiggyBank, TrendingUp, CalendarDays } from 'lucide-react';
+import { Wallet, PiggyBank, TrendingUp, CalendarDays, Receipt } from 'lucide-react';
 import { formatCurrency, formatIncome } from '../lib/format';
 
 function amountClass(value, base) {
@@ -32,11 +32,12 @@ function Card({ label, icon: Icon, value, hero }) {
 
 const HORIZON_ICONS = [CalendarDays, PiggyBank, TrendingUp, TrendingUp];
 
-export function SummaryCards({ isOverview, income, periodIncome, periodSavings, annualSavings, periodLabel }) {
+export function SummaryCards({ isOverview, income, periodIncome, periodExpenses, periodSavings, annualSavings, periodLabel }) {
   if (!isOverview) {
     return (
-      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         <Card label={`${periodLabel} Net Income`} icon={Wallet} value={periodIncome} hero />
+        <Card label={`${periodLabel} Expenses`} icon={Receipt} value={periodExpenses} />
         <Card label={`${periodLabel} Savings`} icon={PiggyBank} value={periodSavings} />
       </div>
     );

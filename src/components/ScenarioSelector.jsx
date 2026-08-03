@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Copy, Pencil, Trash2, Plus, Check, X, ChevronDown } from 'lucide-react';
-import { formatCurrency } from '../lib/format';
+import { MoneyInput } from './MoneyInput';
 
 const PAGE_COPY = {
   dashboard: {
@@ -16,6 +16,7 @@ const PAGE_COPY = {
 export function ScenarioSelector({
   page,
   income,
+  onChangeIncome,
   scenarios,
   selectedScenarioId,
   onSelectScenario,
@@ -58,16 +59,23 @@ export function ScenarioSelector({
 
   return (
     <div className="bg-white dark:bg-[#1e1e1e] p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-white/10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 items-start md:items-center gap-4">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-800 dark:text-white/90">{title}</h1>
           <p className="text-slate-500 dark:text-white/60 mt-1">{subtitle}</p>
         </div>
-        <div className="flex flex-col items-start md:items-center gap-1 shrink-0">
+        <div className="flex flex-col items-start md:items-center gap-1">
           <span className="text-xs font-semibold text-slate-500 dark:text-white/50 uppercase tracking-wider">Gross Annual Income</span>
-          <span className="text-lg font-bold text-slate-800 dark:text-white/90 tabular-nums">{formatCurrency(income)}</span>
+          <div className="flex items-center gap-1">
+            <span className="text-lg font-bold text-slate-800 dark:text-white/90">$</span>
+            <MoneyInput
+              value={income}
+              onChange={onChangeIncome}
+              className="w-32 bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/20 rounded-lg px-2 py-1 text-lg font-bold text-slate-800 dark:text-white/90 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
         </div>
-        <div className="flex flex-col gap-1 w-full md:w-auto">
+        <div className="flex flex-col gap-1 w-full md:items-end">
           <label className="block text-xs font-semibold text-slate-500 dark:text-white/50 uppercase tracking-wider">Scenario</label>
           {renaming ? (
             <div className="flex items-start gap-1.5">

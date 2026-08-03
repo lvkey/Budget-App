@@ -295,6 +295,7 @@ export default function App() {
             <ScenarioSelector
               page={page}
               income={incomeAmount}
+              onChangeIncome={handleChangeIncome}
               scenarios={scenarios}
               selectedScenarioId={selectedScenarioId}
               onSelectScenario={handleSelectScenario}
@@ -307,6 +308,7 @@ export default function App() {
               isOverview={viewFrequencyKey === OVERVIEW_KEY}
               income={netIncomeAmount}
               periodIncome={periodIncome}
+              periodExpenses={totalDisplayed}
               periodSavings={periodSavings}
               annualSavings={annualSavings}
               periodLabel={viewFrequency.adjective}
