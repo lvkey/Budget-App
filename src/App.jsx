@@ -334,6 +334,7 @@ export default function App() {
                 onChangeDependentChildren={handleChangeDependentChildren}
                 expenses={currentScenario?.expenses}
                 taxBreakdown={taxBreakdown}
+                onToggleEdit={() => setEditing((e) => !e)}
               />
             )}
             <ExpenseTable

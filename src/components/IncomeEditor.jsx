@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Check } from 'lucide-react';
 import { MoneyInput } from './MoneyInput';
 import { formatCurrency } from '../lib/format';
 import { calculateMedicareLevySurcharge } from '../lib/tax';
@@ -73,6 +74,7 @@ export function IncomeEditor({
   onChangeDependentChildren,
   expenses,
   taxBreakdown,
+  onToggleEdit,
 }) {
   const [showPartner, setShowPartner] = useState(partnerIncome != null);
 
@@ -89,13 +91,23 @@ export function IncomeEditor({
         <label className="block text-xs font-semibold text-slate-500 dark:text-white/50 uppercase tracking-wider mb-2">
           {hasPartner ? 'Your Annual Income (Gross)' : 'Annual Income (Gross)'}
         </label>
-        <div className="flex items-center gap-1 max-w-xs">
-          <span className="text-xl font-bold text-slate-800 dark:text-white/90">$</span>
-          <MoneyInput
-            value={income}
-            onChange={onChangeIncome}
-            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/20 rounded-lg px-3 py-2 text-xl font-bold text-slate-800 dark:text-white/90 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-1 max-w-xs">
+            <span className="text-xl font-bold text-slate-800 dark:text-white/90">$</span>
+            <MoneyInput
+              value={income}
+              onChange={onChangeIncome}
+              className="w-full bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/20 rounded-lg px-3 py-2 text-xl font-bold text-slate-800 dark:text-white/90 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={onToggleEdit}
+            className="flex items-center gap-1.5 text-sm font-semibold rounded-lg px-4 py-2 shrink-0 bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
+          >
+            <Check size={15} />
+            Done
+          </button>
         </div>
       </div>
 

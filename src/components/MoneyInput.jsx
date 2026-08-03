@@ -1,34 +1,33 @@
 import { useState, useEffect } from 'react';
 
-const VALID_PARTIAL = /^\d*\.?\d*$/;
+const formatCents = (cents) => (cents / 100).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export function MoneyInput({ value, onChange, className, autoFocus, onBlur, onKeyDown }) {
-  const [text, setText] = useState(() => (Number(value) || 0).toFixed(2));
+  const [cents, setCents] = useState(() => Math.round((Number(value) || 0) * 100));
   const [focused, setFocused] = useState(false);
 
   useEffect(() => {
-    if (!focused) setText((Number(value) || 0).toFixed(2));
+    if (!focused) setCents(Math.round((Number(value) || 0) * 100));
   }, [value, focused]);
 
   return (
     <input
       type="text"
-      inputMode="decimal"
+      inputMode="numeric"
       autoFocus={autoFocus}
-      value={text}
+      value={formatCents(cents)}
       onFocus={(e) => {
         setFocused(true);
         e.target.select();
       }}
       onChange={(e) => {
-        const next = e.target.value;
-        if (!VALID_PARTIAL.test(next)) return;
-        setText(next);
-        onChange(next);
+        const digits = e.target.value.replace(/\D/g, '');
+        const next = digits === '' ? 0 : Number(digits);
+        setCents(next);
+        onChange((next / 100).toFixed(2));
       }}
       onBlur={(e) => {
         setFocused(false);
-        setText((Number(value) || 0).toFixed(2));
         onBlur?.(e);
       }}
       onKeyDown={onKeyDown}

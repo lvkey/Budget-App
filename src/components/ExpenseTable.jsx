@@ -1,4 +1,4 @@
-import { ArrowUpDown, Pencil, Check, Eraser, Plus, Trash2 } from 'lucide-react';
+import { ArrowUpDown, Pencil, Eraser, Plus, Trash2 } from 'lucide-react';
 import { formatCurrency } from '../lib/format';
 import { FREQ_OPTIONS } from '../lib/data';
 import { InfoTooltip } from './InfoTooltip';
@@ -60,18 +60,16 @@ export function ExpenseTable({
               </button>
             </>
           )}
-          <button
-            type="button"
-            onClick={onToggleEdit}
-            className={`flex items-center gap-1.5 text-sm font-semibold rounded-lg px-4 py-2 transition-colors ${
-              editing
-                ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                : 'bg-blue-500 text-white hover:bg-blue-600'
-            }`}
-          >
-            {editing ? <Check size={15} /> : <Pencil size={15} />}
-            {editing ? 'Done' : 'Edit expenses'}
-          </button>
+          {!editing && (
+            <button
+              type="button"
+              onClick={onToggleEdit}
+              className="flex items-center gap-1.5 text-sm font-semibold rounded-lg px-4 py-2 transition-colors bg-blue-500 text-white hover:bg-blue-600"
+            >
+              <Pencil size={15} />
+              Edit expenses
+            </button>
+          )}
         </div>
       </div>
       <div className="overflow-x-auto">
@@ -101,13 +99,22 @@ export function ExpenseTable({
               <tr key={item.id} className="border-b border-slate-100 dark:border-white/10 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
                 <td className="px-6 py-4 font-medium text-slate-800 dark:text-white/90">
                   {editing ? (
-                    <input
-                      type="text"
-                      value={item.name}
-                      placeholder="Expense name"
-                      onChange={(e) => onChangeField(item.id, 'name', e.target.value)}
-                      className={`w-full min-w-[160px] ${inputClass}`}
-                    />
+                    <div className="flex flex-col gap-1 min-w-[160px]">
+                      <input
+                        type="text"
+                        value={item.name}
+                        placeholder="Expense name"
+                        onChange={(e) => onChangeField(item.id, 'name', e.target.value)}
+                        className={`w-full ${inputClass}`}
+                      />
+                      <input
+                        type="text"
+                        value={item.details || ''}
+                        placeholder="Details (optional, e.g. includes alcohol)"
+                        onChange={(e) => onChangeField(item.id, 'details', e.target.value)}
+                        className={`w-full text-xs ${inputClass}`}
+                      />
+                    </div>
                   ) : (
                     <span className="inline-flex items-center">
                       {item.name || 'Untitled expense'}
